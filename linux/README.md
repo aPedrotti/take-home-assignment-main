@@ -1,5 +1,6 @@
 # Task 4: Linux
-### Exercise Goals
+
+## Exercise Goals
 
 * Copy your `app.yaml` from your second task to this folder with the name `script.yml`:
   * Replace the `image` value in your deployment by: `MY_NEW_IMAGE`
@@ -11,9 +12,10 @@
     * Create a new file called `new-app.yaml` replcaing the `MY_NEW_IMAGE` by your new image tag/name;
   * Use `kubectl` to show the difference between the current state in your `minikube` and your newly created `new-app.yaml`;
 
-### Expected Output
+## Expected Output
 
 Please, provide us with a file named `automation.sh` you created. Your `automation.sh` is supposed to:
+
 * Build your `Dockerfile`;
 * Tag your image dinacally;
 * Create a new `new-app.yaml` file;
@@ -23,6 +25,6 @@ Please, provide us with your `script.yml` and `new-app.yaml` files;
 
 [Optional] You can also share screenshots of your progress.
 
-### Next steps?
+## Next steps?
 
 Once you complete this task, send us your assignment so we can evaluate it;
