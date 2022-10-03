@@ -31,7 +31,7 @@ Vue.component("article-front", {
         route: "/articles/"
       };
     },
-   computed: {
+    computed: {
       getURL: function() {
         return this.route+1;
       },
