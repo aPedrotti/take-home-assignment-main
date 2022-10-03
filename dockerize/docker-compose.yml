@@ -1,0 +1,35 @@
+version: "3"
+services:
+  mysql:
+    container_name: mysql
+    image: "mysql:8.0"
+    ports:
+      - "3306:3306"
+    networks:
+      - webapp
+    environment:
+      - MYSQL_ROOT_PASSWORD=naosei
+      - MYSQL_DATABASE=blog
+      - MYSQL_USER=myapp-web
+      - MYSQL_PASSWORD=naosei
+    volumes:
+    - ./dump:/docker-entrypoint-initdb.d
+  myapp-web:
+    container_name: myapp-web
+    image: myapp-web:latest
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    links: 
+    - "mysql"
+    networks:
+      - webapp
+networks:
+  webapp:
+    driver: bridge
+
+

@@ -1,0 +1,170 @@
+# THESE ARE SAMPLE DATA WITH NO PROD VALUE
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+  namespace: ns-web-apps
+data:
+  initdb.sql: |
+    USE blog; 
+    CREATE TABLE blog_posts (idblog_posts INT NOT NULL, title VARCHAR(20), post_text TEXT, post_date TEXT, image_url TEXT, tags TEXT); 
+    INSERT INTO blog_posts VALUES (1, 'first post', 'this is my first post', '2022-10-03', 'https://google.com', 'post;blogging;medium');
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-database
+  namespace: ns-web-apps
+spec:
+  selector:
+    app: mysql
+  ports:
+  - name: database-service-port
+    protocol: TCP
+    port: 3306
+    targetPort: database-port
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  database
+  namespace: ns-web-apps
+  labels:
+    app:  mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  mysql
+    spec:
+      volumes:
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: "naosei"
+          - name: MYSQL_DATABASE
+            value: "blog"
+          - name: MYSQL_USER
+            value: "myapp-web"
+          - name: MYSQL_PASSWORD
+            value: "naosei"
+        ports:
+        - name: database-port
+          containerPort: 3306
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "200m"
+        volumeMounts:
+          - name: mysql-initdb
+            mountPath: /docker-entrypoint-initdb.d
+        readinessProbe:
+          tcpSocket:
+            port: database-port
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-myapp-web
+  namespace: ns-web-apps
+spec:
+  selector:
+    app: myapp-web
+  ports:
+  - name: my-app-service-port
+    protocol: TCP
+    port: 8080
+    targetPort: myapp-web-port
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sec-myapp-web
+  namespace: ns-web-apps
+type: Opaque
+stringData: 
+  server.confi: |
+    myapp-web:naosei@tcp(svc-database.ns-web-apps.svc.cluster.local:3306)/blog?tls=skip-verify
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dp-myapp-web
+  namespace: ns-web-apps
+  labels:
+    app.kubernetes.io/name: MyApp-Web
+spec:
+  selector:
+    matchLabels:
+      app: myapp-web
+  template:
+    metadata:
+      labels:
+        app: myapp-web
+    spec:
+      volumes:
+        - name: myapp-web-secret
+          secret:
+            secretName: sec-myapp-web
+      initContainers:
+      - name: init-myservice
+        image: busybox:1.28
+        command: ['sh', '-c', "echo 'waiting for myapp-web'; sleep 30; echo 'done'"]
+      containers:
+      - name: myapp-web
+        image: my_new_mage:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: myapp-web-secret
+          mountPath: "/app/server.confi"
+          subPath: "server.confi"
+          readOnly: true
+        ports:
+        - name: myapp-web-port
+          containerPort: 8080
+        readinessProbe:
+          tcpSocket:
+            port: myapp-web-port
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: myapp-web-port
+            #httpHeaders:
+            #- name: Custom-Header
+            #  value: Awesome
+          initialDelaySeconds: 120
+          periodSeconds: 30
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","killall myapp-web; while killall -0 myapp-web; do sleep 2; done"]
+      terminationGracePeriodSeconds: 30
+
