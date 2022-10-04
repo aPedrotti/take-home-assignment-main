@@ -47,6 +47,12 @@ spec:
       labels:
         app:  mysql
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
       volumes:
         - name: mysql-initdb
           configMap:
@@ -71,6 +77,9 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "200m"
+          requests:
+            memory: "500Mi"
+            cpu: "100m"
         volumeMounts:
           - name: mysql-initdb
             mountPath: /docker-entrypoint-initdb.d
@@ -79,6 +88,9 @@ spec:
             port: database-port
           initialDelaySeconds: 5
           periodSeconds: 10
+        securityContext:  
+          allowPrivilegeEscalation: false
+          privileged: false
       restartPolicy: Always
 
 ---
@@ -128,10 +140,16 @@ spec:
         - name: myapp-web-secret
           secret:
             secretName: sec-myapp-web
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
       initContainers:
       - name: init-myservice
         image: busybox:1.28
-        command: ['sh', '-c', "echo 'waiting for myapp-web'; sleep 30; echo 'done'"]
+        command: ['sh', '-c', "echo 'waiting for myapp-web'; sleep 5; echo 'done'"]
       containers:
       - name: myapp-web
         image: myapp-web:latest
@@ -139,7 +157,10 @@ spec:
         resources:
           limits:
             memory: "128Mi"
-            cpu: "500m"
+            cpu: "50m"
+          requests:
+            memory: "32Mi"
+            cpu: "20m"
         volumeMounts:
         - name: myapp-web-secret
           mountPath: "/app/server.confi"
@@ -157,14 +178,14 @@ spec:
           httpGet:
             path: /
             port: myapp-web-port
-            #httpHeaders:
-            #- name: Custom-Header
-            #  value: Awesome
           initialDelaySeconds: 120
           periodSeconds: 30
         lifecycle:
           preStop:
             exec:
               command: ["/bin/sh","-c","killall myapp-web; while killall -0 myapp-web; do sleep 2; done"]
+        securityContext:  
+          allowPrivilegeEscalation: false
+          privileged: false
       terminationGracePeriodSeconds: 30
 

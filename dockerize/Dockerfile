@@ -21,7 +21,6 @@ FROM debian:bullseye-slim
 
 ENV APP_NAME="myapp-web"
 ENV APP_PATH=/app
-#ENV USER_NAME="${APP_NAME}"
 
 RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates && \
@@ -35,10 +34,11 @@ ADD server.confi /app/
 WORKDIR $APP_PATH
 
 # Execute with a non-root
-#RUN groupadd -g 1001 $USER_NAME && useradd -r -g $APP_NAME --base-dir $APP_PATH --home-dir $APP_PATH --uid 1001 $USER_NAME
-#RUN echo "$USER_NAME / $APP_PATH"
-#RUN chown -R $USER_NAME:$USER_NAME $APP_PATH
-#USER $APP_NAME:$APP_NAME
+ENV USER_NAME="${APP_NAME}"
+RUN groupadd -g 1000 $USER_NAME && useradd -r -g $APP_NAME --base-dir $APP_PATH --home-dir $APP_PATH --uid 1000 $USER_NAME && usermod -aG www-data ${USER_NAME}
+RUN chown -R $USER_NAME:$USER_NAME $APP_PATH
+
+USER 1000
 
 EXPOSE 8080
 
