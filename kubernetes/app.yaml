@@ -149,7 +149,7 @@ spec:
       initContainers:
       - name: init-myservice
         image: busybox:1.28
-        command: ['sh', '-c', "echo 'waiting for myapp-web'; sleep 5; echo 'done'"]
+        command: ['sh', '-c', "echo 'waiting for myapp-web'; sleep 30; echo 'done'"]
       containers:
       - name: myapp-web
         image: myapp-web:latest
@@ -172,8 +172,8 @@ spec:
         readinessProbe:
           tcpSocket:
             port: myapp-web-port
-          initialDelaySeconds: 5
-          periodSeconds: 10
+          initialDelaySeconds: 120
+          periodSeconds: 30
         livenessProbe:
           httpGet:
             path: /
