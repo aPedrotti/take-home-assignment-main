@@ -38,4 +38,7 @@ echo "! Once deployment is running you can forward you local port to the pod wit
 minikube kubectl -- port-forward deploy/dp-myapp-web -n ns-web-apps 8080:8080 &
 
 - You can run this following command to follow deployments readiness;
-watch minikube kubectl -- get pods -n ns-web-apps"
+watch minikube kubectl -- get pods -n ns-web-apps
+
+!! App pod may crash during the startup 
+!  due the startup of the database, however once db is up, app will start; This should be handled by app side, which is not the focus of this task."
