@@ -14,8 +14,8 @@ import (
 )
 
 func init() {
-	if _, noLog := os.Stat("/log.txt"); os.IsNotExist(noLog) {
-		newLog, err := os.Create("/log.txt")
+	if _, noLog := os.Stat("./log.txt"); os.IsNotExist(noLog) {
+		newLog, err := os.Create("./log.txt")
 		if err != nil {
 			log.Fatal(err)
 		}
